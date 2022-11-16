@@ -204,6 +204,7 @@ if __name__ == "__main__":
     init_dic()
     must_check = len(sys.argv) > 1 and sys.argv[1] == "--check"
     for file in read_source():
+        print(f"{Fore.GREEN} Parse {file}{Style.RESET_ALL}")
         if not is_dst_file_exist(file):
             content = translate(file)
             save_output_translation(content, file)
