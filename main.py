@@ -59,10 +59,14 @@ def quoted_presenter(dumper, data):
 def translate(file: str):
     print(f"Translation start for file {file}")
     content = yaml.full_load(open(file))
-    fp = open(file, 'r')
-    pbar = tqdm(total=len(fp.readlines()))
+    pbar = tqdm(total=get_total_lines(file))
     parse_content(content, pbar)
     return content
+
+
+def get_total_lines(file):
+    fp = open(file, 'r')
+    return len(fp.readlines())
 
 
 def encode_line_to_translate(line: str):
@@ -143,16 +147,21 @@ def check_translation(file: str):
     dst_filename = compute_dst_filename(file)
     source_yaml = yaml.full_load(open(file))
     dest_yaml = yaml.full_load(open(dst_filename))
-    check_translation_line(source_yaml, dest_yaml, file, None)
+    pbar = tqdm(total=get_total_lines(file))
+    check_translation_lines(source_yaml, dest_yaml, file, None, pbar)
 
 
-def check_translation_line(source_yaml: dict, dest_yaml: dict, src_filename, parent: str = None):
+def check_translation_lines(source_yaml: dict, dest_yaml: dict, src_filename, parent: str = None, pbar = None):
     for key in source_yaml:
         value = source_yaml[key]
         if type(value) is dict:
-            check_translation_line(value, dest_yaml, src_filename, key)
+            check_translation_lines(value, dest_yaml, src_filename, key, pbar)
         else:
-            print(f"{Fore.RED}{Style.BRIGHT}Original :{Style.RESET_ALL} " + source_yaml[key])
+            pbar.update(1)
+            original_line = source_yaml[key]
+            if original_line == "":
+                continue
+            print(f"{Fore.RED}{Style.BRIGHT}Original :{Style.RESET_ALL} " + original_line)
             if key is None:
                 translated_line = dest_yaml[key]
             else:
