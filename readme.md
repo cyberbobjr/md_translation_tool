@@ -42,7 +42,7 @@ pip install -r requirements.txt
 
 ### Configuration
 
-You can customize the tool by settings some mandatory options in the config file ```conf.json```
+You __must__ customize the tool by settings some mandatory options in the config file ```conf.json```
 
 Explanation :
 
@@ -52,7 +52,7 @@ Explanation :
   "dest_path": "dest", # The translated files will be put here
   "dict_filename": "dict.json", # The dictionnary file which will be construct & used for the translation
   "deepl": {
-    "key": "xxxxx", # You DeepL API KEY
+    "key": "xxxxx", # Your DeepL API KEY
     "lang": "FR" # The target language for translation
   }
 }
