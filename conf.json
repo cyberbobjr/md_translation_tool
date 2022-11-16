@@ -1,0 +1,9 @@
+{
+  "source_path": "source",
+  "dest_path": "dest",
+  "dict_filename": "dict.json",
+  "deepl": {
+    "key": "xxxxxxx",
+    "lang": "FR"
+  }
+}
