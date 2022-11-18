@@ -15,6 +15,7 @@ from colorama import Fore, Style
 conf = {}
 translator: Translator = {}
 alreadytranslated = {}
+yaml_keys = []
 
 parser = argparse.ArgumentParser(
     prog='MD translation tool',
@@ -62,7 +63,10 @@ def read_source():
 
 
 def quoted_presenter(dumper, data):
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')
+    if data in yaml_keys:
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='')
+    else:
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')
 
 
 def translate(file: str):
@@ -127,7 +131,12 @@ def save_translation_in_dict(key: str, translated: str):
 
 def save_output_translation(content, file):
     dst_filename = compute_dst_filename(file)
-    yaml.dump(content, open(dst_filename, "w+"), default_flow_style=False, sort_keys=False, width=10000,
+    yaml.dump(content,
+              open(dst_filename, "w+"),
+              default_flow_style=False,
+              indent=2,
+              sort_keys=False,
+              width=10000,
               allow_unicode=True)
 
 
@@ -138,6 +147,7 @@ def compute_dst_filename(file):
 def parse_content(content: dict, pbar: Bar):
     for key in content:
         value = content[key]
+        yaml_keys.append(key)
         if type(value) is dict:
             parse_content(value, pbar)
         else:
@@ -157,7 +167,7 @@ def check_translation(file: str, skip_line=0):
     dst_filename = compute_dst_filename(file)
     source_yaml = yaml.full_load(open(file))
     dest_yaml = yaml.full_load(open(dst_filename))
-    pbar = Bar(max=get_total_lines(file))
+    pbar = Bar(max=get_total_lines(dst_filename))
     check_translation_lines(source_yaml, dest_yaml, file, None, pbar, skip_line)
     exit(1)
 
@@ -166,6 +176,7 @@ def check_translation_lines(source_yaml: dict, dest_yaml: dict, src_filename, pa
                             skip_line=0):
     for key in source_yaml:
         pbar.next()
+        yaml_keys.append(key)
         value = source_yaml[key]
         if type(value) is dict:
             check_translation_lines(value, dest_yaml, src_filename, key, pbar, skip_line)
