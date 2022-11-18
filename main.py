@@ -83,7 +83,7 @@ def get_total_lines(file):
 
 
 def encode_line_to_translate(line: str):
-    regex = r"([§][a-zA-Z0..9]).*?([§])"
+    regex = r"(§[a-zA-Z0..9]).*?(§!)"
     line_to_translate = line
     found = re.finditer(regex, line, re.MULTILINE)
     for matchNum, match in enumerate(found, start=1):
@@ -105,7 +105,7 @@ def decode_line_from_translate(line: str):
         groups = match.groups()
         color = groups[0]
         find = match.group()
-        replace_by = find.replace(f"<COLOR={color}>", f"§{color}").replace("</COLOR>", "§")
+        replace_by = find.replace(f"<COLOR={color}>", f"§{color}").replace("</COLOR>", "§!")
         line_to_translate = line_to_translate.replace(find, replace_by)
     return line_to_translate
 
