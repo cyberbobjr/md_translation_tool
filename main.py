@@ -6,7 +6,7 @@ import re
 import signal
 
 import deepl
-from tqdm import tqdm
+from progress.bar import Bar
 import yaml
 from deepl import Translator
 from InquirerPy import inquirer, prompt
@@ -68,7 +68,7 @@ def quoted_presenter(dumper, data):
 def translate(file: str):
     print(f"Translation start for file {file}")
     content = yaml.full_load(open(file))
-    pbar = tqdm(total=get_total_lines(file))
+    pbar = Bar(max=get_total_lines(file))
     parse_content(content, pbar)
     return content
 
@@ -135,13 +135,13 @@ def compute_dst_filename(file):
     return f"{conf['dest_path']}/{os.path.basename(file)}"
 
 
-def parse_content(content: dict, pbar):
+def parse_content(content: dict, pbar: Bar):
     for key in content:
         value = content[key]
         if type(value) is dict:
             parse_content(value, pbar)
         else:
-            pbar.update(1)
+            pbar.next()
             if is_already_translated(content[key]):
                 content[key] = alreadytranslated[content[key]]
             else:
@@ -157,25 +157,25 @@ def check_translation(file: str, skip_line=0):
     dst_filename = compute_dst_filename(file)
     source_yaml = yaml.full_load(open(file))
     dest_yaml = yaml.full_load(open(dst_filename))
-    pbar = tqdm(total=get_total_lines(file))
+    pbar = Bar(max=get_total_lines(file))
     check_translation_lines(source_yaml, dest_yaml, file, None, pbar, skip_line)
     exit(1)
 
 
-def check_translation_lines(source_yaml: dict, dest_yaml: dict, src_filename, parent: str = None, pbar: tqdm = None,
+def check_translation_lines(source_yaml: dict, dest_yaml: dict, src_filename, parent: str = None, pbar: Bar = None,
                             skip_line=0):
     for key in source_yaml:
+        pbar.next()
         value = source_yaml[key]
         if type(value) is dict:
             check_translation_lines(value, dest_yaml, src_filename, key, pbar, skip_line)
         else:
-            pbar.update(1)
-            if skip_line > 0 and pbar.n < skip_line:
+            if skip_line > 0 and pbar.index < skip_line:
                 continue
             original_line = source_yaml[key]
             if original_line == "":
                 continue
-            print(f"{Fore.RED}{Style.BRIGHT}Original :{Style.RESET_ALL} " + original_line)
+            print(f"\n{Fore.RED}{Style.BRIGHT}Original :{Style.RESET_ALL} " + original_line)
 
             if parent is None:
                 translated_line = dest_yaml[key]
