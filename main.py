@@ -1,9 +1,9 @@
+import argparse
 import glob
 import json
 import os
 import re
 import signal
-import sys
 
 import deepl
 from tqdm import tqdm
@@ -15,6 +15,15 @@ from colorama import Fore, Style
 conf = {}
 translator: Translator = {}
 alreadytranslated = {}
+
+parser = argparse.ArgumentParser(
+    prog='MD translation tool',
+    description='This software help translator for Millenium Dawn mod')
+
+parser.add_argument('-c', '--check', default=False, action='store_true',
+                    help='launch Validate translation after processing')
+parser.add_argument('-s', '--skip-line', default=0, type=int, help='Set the start line for validation')
+args = parser.parse_args()
 
 
 def init_config():
@@ -99,7 +108,8 @@ def decode_line_from_translate(line: str):
 
 def translate_string(text: str):
     global translator
-    return translator.translate_text(text, target_lang=conf['deepl']['lang'], source_lang='EN')
+    return translator.translate_text(text, target_lang=conf['deepl']['lang'], source_lang='EN',
+                                     formality=conf['deep']['formality'])
 
 
 def is_already_translated(key: str):
@@ -143,40 +153,45 @@ def parse_content(content: dict, pbar):
                     content[key] = from_translate
 
 
-def check_translation(file: str):
+def check_translation(file: str, skip_line=0):
     dst_filename = compute_dst_filename(file)
     source_yaml = yaml.full_load(open(file))
     dest_yaml = yaml.full_load(open(dst_filename))
     pbar = tqdm(total=get_total_lines(file))
-    check_translation_lines(source_yaml, dest_yaml, file, None, pbar)
+    check_translation_lines(source_yaml, dest_yaml, file, None, pbar, skip_line)
+    exit(1)
 
 
-def check_translation_lines(source_yaml: dict, dest_yaml: dict, src_filename, parent: str = None, pbar = None):
+def check_translation_lines(source_yaml: dict, dest_yaml: dict, src_filename, parent: str = None, pbar: tqdm = None,
+                            skip_line=0):
     for key in source_yaml:
         value = source_yaml[key]
         if type(value) is dict:
-            check_translation_lines(value, dest_yaml, src_filename, key, pbar)
+            check_translation_lines(value, dest_yaml, src_filename, key, pbar, skip_line)
         else:
             pbar.update(1)
+            if skip_line > 0 and pbar.n < skip_line:
+                continue
             original_line = source_yaml[key]
             if original_line == "":
                 continue
             print(f"{Fore.RED}{Style.BRIGHT}Original :{Style.RESET_ALL} " + original_line)
-            if key is None:
+
+            if parent is None:
                 translated_line = dest_yaml[key]
             else:
                 translated_line = dest_yaml[parent][key]
+
             print(f"{Fore.GREEN}{Style.BRIGHT}Translation :{Style.RESET_ALL} {translated_line}")
             confirm = inquirer.confirm(message="Validate ?", default=True).execute()
             if not confirm:
                 new_translation = ask_edit_translation(translated_line)
                 if new_translation is not None:
-                    if key is None:
+                    if parent is None:
                         dest_yaml[key] = new_translation
                     else:
                         dest_yaml[parent][key] = new_translation
                     save_output_translation(dest_yaml, src_filename)
-    exit(1)
 
 
 def ask_edit_translation(value):
@@ -211,7 +226,7 @@ if __name__ == "__main__":
     init_config()
     init_deepl()
     init_dic()
-    must_check = len(sys.argv) > 1 and sys.argv[1] == "--check"
+    must_check = args.check
     for file in read_source():
         print(f"{Fore.GREEN} Parse {file}{Style.RESET_ALL}")
         if not is_dst_file_exist(file):
@@ -219,5 +234,5 @@ if __name__ == "__main__":
             save_output_translation(content, file)
             print(f"Translation finished for file {file}")
         if must_check:
-            check_translation(file)
+            check_translation(file, args.skip_line)
 print(f"All translations finished")
