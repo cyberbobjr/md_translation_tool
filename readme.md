@@ -53,7 +53,8 @@ Explanation :
   "dict_filename": "dict.json", # The dictionnary file which will be construct & used for the translation
   "deepl": {
     "key": "xxxxx", # Your DeepL API KEY
-    "lang": "FR" # The target language for translation
+    "lang": "FR" # The target language for translation,
+    "formality" : "prefer_less" # The formality for translation, don't set it you use the free API
   }
 }
 ```
@@ -79,3 +80,8 @@ python3 main.py --check
 ```
 
 In this case, after all translation a validation process will be show.
+
+If you want the validation begin at a line number, set the '-s' option :
+```
+python3 main.py --check -s 500
+```

@@ -112,8 +112,14 @@ def decode_line_from_translate(line: str):
 
 def translate_string(text: str):
     global translator
-    return translator.translate_text(text, target_lang=conf['deepl']['lang'], source_lang='EN',
-                                     formality=conf['deep']['formality'])
+    if 'formality' not in conf['deepl']:
+        formality = 'default'
+    else:
+        formality = conf['deepl']['formality']
+    return translator.translate_text(text,
+                                     target_lang=conf['deepl']['lang'],
+                                     source_lang='EN',
+                                     formality=formality)
 
 
 def is_already_translated(key: str):
