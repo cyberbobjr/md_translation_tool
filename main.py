@@ -21,9 +21,21 @@ parser = argparse.ArgumentParser(
     prog='MD translation tool',
     description='This software help translator for Millenium Dawn mod')
 
-parser.add_argument('-c', '--check', default=False, action='store_true',
+parser.add_argument('-c',
+                    '--check',
+                    default=False,
+                    action='store_true',
                     help='launch Validate translation after processing')
-parser.add_argument('-s', '--skip-line', default=0, type=int, help='Set the start line for validation')
+parser.add_argument('-s',
+                    '--skip-line',
+                    default=0,
+                    type=int,
+                    help='Set the start line for validation')
+parser.add_argument('-f',
+                    '--file',
+                    default="**.yml",
+                    type=str,
+                    help='Set the file to translate and/or validate, will parse all file if omitted')
 args = parser.parse_args()
 
 
@@ -58,8 +70,8 @@ def init_deepl():
     translator = deepl.Translator(conf["deepl"]["key"])
 
 
-def read_source():
-    return glob.glob(conf['source_path'] + "/**.yml")
+def read_source(file: str):
+    return glob.glob(conf['source_path'] + "/" + file)
 
 
 def quoted_presenter(dumper, data):
@@ -244,7 +256,7 @@ if __name__ == "__main__":
     init_deepl()
     init_dic()
     must_check = args.check
-    for file in read_source():
+    for file in read_source(args.file):
         print(f"{Fore.GREEN} Parse {file}{Style.RESET_ALL}")
         if not is_dst_file_exist(file):
             content = translate(file)
