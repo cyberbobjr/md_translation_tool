@@ -4,3 +4,8 @@ test.yml
 *.iml
 venv
 source
+pyvenv.cfg
+bin
+include
+lib
+common
